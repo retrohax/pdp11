@@ -1,0 +1,106 @@
+249a
+	"dz",
+	0, 300, CHAR+INTR,
+	"	dzin; br5+%d.\n	dzou; br5+%d.\n",
+	".globl	_dzrint\ndzin:	jsr	r0,call; jmp _dzrint\n",
+	".globl	_dzxint\ndzou:	jsr	r0,call; jmp _dzxint\n",
+	"",
+	"	dzopen, dzclose, dzread, dzwrite, dzioctl, nulldev, dz_tty,",
+	"",
+	"int	dzopen(), dzclose(), dzread(), dzwrite(), dzioctl();\nstruct	tty	dz_tty[];",
+.
+45a
+	"dz",
+.
+w
+q
+
+
+-"dc",
+-0, 308, CHAR+INTR,
+-"-dcin; br5+%d.\n-dcou; br5+%d.\n",
+-".globl-_dcrint\ndcin:-jsr-r0,call; jmp _dcrint\n",
+-".globl-_dcxint\ndcou:-jsr-r0,call; jmp _dcxint\n",
+-"",
+-"-dcopen, dcclose, dcread, dcwrite, dcioctl, nulldev, dc11,",
+-"",
+-"int-dcopen(), dcclose(), dcread(), dcwrite(), dcioctl();\nstruct-tty-dc11[];",
+
+/etc/mknod /dev/tty00 c 19 0
+/etc/mknod /dev/tty01 c 19 1
+/etc/mknod /dev/tty02 c 19 2
+/etc/mknod /dev/tty03 c 19 3
+/etc/mknod /dev/tty04 c 19 4
+/etc/mknod /dev/tty05 c 19 5
+/etc/mknod /dev/tty06 c 19 6
+/etc/mknod /dev/tty07 c 19 7
+/etc/mknod /dev/tty08 c 19 8
+/etc/mknod /dev/tty09 c 19 9
+/etc/mknod /dev/tty10 c 19 10
+/etc/mknod /dev/tty11 c 19 11
+/etc/mknod /dev/tty12 c 19 12
+/etc/mknod /dev/tty13 c 19 13
+/etc/mknod /dev/tty14 c 19 14
+/etc/mknod /dev/tty15 c 19 15
+
+echo 'stty erase "^h" kill "^u" nl0 cr0' 9600 > .profile
+
+/etc/mknod /dev/tty00 c 3 0
+/etc/mknod /dev/tty01 c 3 1
+/etc/mknod /dev/tty02 c 3 2
+/etc/mknod /dev/tty03 c 3 3
+
+echo 'stty erase "^h" kill "^u" nl0 cr0 9600' > .profile
+
+  dzopen(dev, flag)
+  {
+          register struct tty *tp;
+          int x;
+          int localmode;
+          extern dzstart(), dzscan();
+
+          x = dev;
+          dev = minor(dev);
+          localmode = dev & 0200;    /* high bit = local mode */
+          dev &= 017;                /* mask to get actual line */
+          if (dev >= dz_cnt) {
+                  u.u_error = ENXIO;
+                  return;
+          }
+          tp = &dz_tty[dev];
+          if ((tp->t_state&(ISOPEN|WOPEN)) == 0) {
+                  tp->t_oproc = dzstart;
+                  tp->t_iproc = NULL;
+                  ttychars(tp);
+                  tp->t_ispeed = SSPEED;
+                  tp->t_ospeed = SSPEED;
+                  tp->t_flags = ODDP|EVENP|ECHO;
+                  dzparam(dev);
+          }
+          dzmodem(dev, ON);
+          if (!localmode) {
+                  spl6(); 1
+                  while ((tp->t_state&CARR_ON)==0) {
+                          tp->t_state |= WOPEN;
+                          sleep((caddr_t)&tp->t_rawq, TTIPRI);
+                  }
+          } else {
+                  tp->t_state |= CARR_ON;
+          }
+          ttyopen(x,tp);
+          spl0();
+  }
+
+  Then rebuild the kernel and create a local-mode device:
+  /etc/mknod /dev/tty015L c 19 129
+  chmod 666 /dev/tty01l
+
+  (129 = 128 + 1 for line 1 in local mode)
+
+
+sudo socat -v \
+    TCP-LISTEN:6501,reuseaddr,fork \
+    file:/dev/ttyUSB0,raw,nonblock,echo=0,b9600,cs8,parenb=0,cstopb=1
+
+
+cat devices.req | req api.alertra.com 443 | awk '{ if (length($0) >= 48) { s = substr($0, 1, 48); if (s ~ /^[0-9a-f]+$/) print s } }'

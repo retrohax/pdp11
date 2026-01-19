@@ -1,0 +1,6 @@
+GET /v1.1/devices/DEVICE_ID?WithConfig=Y HTTP/1.1
+Host: api.alertra.com
+Connection: close
+ALERTRA-API-KEY: 
+
+

@@ -1,0 +1,8 @@
+PUT /v1.1/devices/DEVICE_ID HTTP/1.1
+Host: api.alertra.com
+Connection: close
+Content-Type: application/json
+Content-Length: 58
+ALERTRA-API-KEY: 
+
+{"HostData": {"headers": {"KEY": "VALUE"}}}

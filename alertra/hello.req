@@ -1,0 +1,4 @@
+GET /v1.1/hello HTTP/1.1
+Host: api.alertra.com
+Connection: close
+
