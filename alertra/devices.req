@@ -1,6 +1,5 @@
-GET /v1.1/devices?fmt=csv HTTP/1.1
+GET /v1.1/devices?Limit=200&fmt=csv HTTP/1.1
 Host: api.alertra.com
 Connection: close
-ALERTRA-API-KEY: 
-
+ALERTRA-API-KEY: YOUR-API-KEY
 
